@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npm run jshint && npm run jscs && nodeunit test",
     "jshint": "jshint *.js test/*.js",
-    "jscs": "jscs *.js test/*.js"
+    "jscs": "jscs *.js test/*.js",
+    "coveralls": "istanbul cover nodeunit test && cat ./coverage/lcov.info | coveralls --verbose"
   },
   "repository": {
     "type": "git",
@@ -25,7 +26,8 @@
     "jshint": "2.4.4",
     "jscs": "1.3.0",
     "nodeunit": "0.8.6",
-    "coveralls": "2.10.0"
+    "coveralls": "2.10.0",
+    "istanbul": "0.2.6"
   },
   "jshintConfig": {
     "bitwise": true,

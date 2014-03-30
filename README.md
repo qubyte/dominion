@@ -1,5 +1,11 @@
 # dominion
 
+[![Coverage Status](http://img.shields.io/coveralls/qubyte/dominion.svg)](https://coveralls.io/r/qubyte/dominion?branch=master)
+[![Build Status](http://img.shields.io/travis/qubyte/dominion/master.svg)](https://travis-ci.org/qubyte/dominion)
+
+[![npm](http://img.shields.io/npm/v/dominion.svg)](https://npmjs.org/dominion)
+[![npm](http://img.shields.io/github/release/qubyte/dominion.svg)](https://github.com/qubyte/dominion/releases)
+
 Domain middleware for Express and vanilla Node.js. Dominion has no production dependencies.
 
 Dominion will attempt to gracefully close all servers registered with it when any requests using
