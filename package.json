@@ -1,6 +1,6 @@
 {
   "name": "dominion",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A domain middleware for express apps, capable of handling multiple apps.",
   "main": "index.js",
   "scripts": {
