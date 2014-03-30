@@ -8,6 +8,10 @@
     "jshint": "jshint *.js test/*.js",
     "jscs": "jscs *.js test/*.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qubyte/dominion"
+  },
   "keywords": [
     "domain",
     "error",
