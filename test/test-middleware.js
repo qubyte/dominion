@@ -184,10 +184,10 @@ exports.vanilla = {
 				test.equal(field, 'Content-Type');
 				test.equal(value, 'text/plain');
 			},
-			set statusCode (code) {
+			set statusCode(code) {
 				test.strictEqual(code, 500);
 			},
-			get statusCode () {},
+			get statusCode() { },
 			end: function (code) {
 				test.strictEqual(code, 'Internal Server Error');
 			}

@@ -36,6 +36,7 @@ exports.middleware = function (req, res, next) {
 		} catch (error) {
 			sendError = error;
 		} finally {
+			/* jscs ignore next */
 			exports.emit('shutdown', req, res, err, sendError);
 		}
 	});
@@ -78,6 +79,7 @@ exports.vanilla = function (req, res) {
 		} catch (error) {
 			sendError = error;
 		} finally {
+			/* jscs ignore next */
 			exports.emit('shutdown', req, res, err, sendError);
 		}
 	});

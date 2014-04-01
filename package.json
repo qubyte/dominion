@@ -67,6 +67,7 @@
       "do",
       "try",
       "catch",
+      "finally",
       "case",
       "default"
     ],
@@ -79,7 +80,8 @@
       "switch",
       "return",
       "try",
-      "catch"
+      "catch",
+      "finally"
     ],
     "requireParenthesesAroundIIFE": true,
     "requireSpacesInAnonymousFunctionExpression": {
@@ -154,7 +156,7 @@
       "mark": "'",
       "escape": true
     },
-    "validateIndentation": "\t",
+
     "disallowMixedSpacesAndTabs": "smart",
     "disallowTrailingWhitespace": true,
     "disallowKeywordsOnNewLine": [
