@@ -5,15 +5,6 @@ var EventEmitter = require('events').EventEmitter;
 
 var testEmitter = new EventEmitter();
 
-// Replace cluster.worker with a mock to check disconnect is called.
-cluster.worker = {
-	disconnect: function () {
-		'use strict';
-
-		testEmitter.emit('disconnect');
-	}
-};
-
 function FakeServer() {
 	'use strict';
 
@@ -28,140 +19,281 @@ FakeServer.prototype.close = function () {
 	this.emit('close');
 };
 
+// Replace cluster.worker with a mock to check disconnect is called.
+cluster.worker = {
+	disconnect: function () {
+		'use strict';
 
-exports['The middleware should catch request errors and disconnect.'] = function (test) {
-	'use strict';
+		testEmitter.emit('disconnect');
+	}
+};
 
-	test.expect(8);
+exports.middleware = {
+	'The middleware should catch request errors and disconnect.': function (test) {
+		'use strict';
 
-	var fakeServer = new FakeServer();
+		test.expect(10);
 
-	dominion.addServer(fakeServer);
+		var fakeServer = new FakeServer();
 
-	var req = new EventEmitter();
+		dominion.addServer(fakeServer);
 
-	var res = {
-		send: function (code) {
+		var req = new EventEmitter();
+
+		var res = {
+			send: function (code) {
+				testEmitter.emit('resCode', code);
+			},
+			set: function (field, value) {
+				test.equal(field, 'Content-Type');
+				test.equal(value, 'text/plain');
+			}
+		};
+
+		var next = function () {
+			test.ok(true);
+		};
+
+		dominion.middleware(req, res, next);
+
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			test.equal(reqObj, req);
+			test.equal(resObj, res);
+			test.equal(err, 'test error');
+			test.strictEqual(sendError, undefined);
+		});
+
+		testEmitter.once('disconnect', function () {
+			test.ok(true);
+		});
+
+		testEmitter.once('resCode', function (code) {
+			test.strictEqual(code, 500);
+		});
+
+		fakeServer.once('close', function () {
+			test.ok(true);
+		});
+
+		req.emit('error', 'test error');
+
+		process.nextTick(function () {
+			test.done();
+		});
+	},
+
+	'The middleware should catch response errors and disconnect.': function (test) {
+		'use strict';
+
+		test.expect(10);
+
+		var fakeServer = new FakeServer();
+
+		dominion.addServer(fakeServer);
+
+		var req = {};
+
+		var res = new EventEmitter();
+
+		res.send = function (code) {
 			testEmitter.emit('resCode', code);
-		}
-	};
+		};
 
-	var next = function () {
-		test.ok(true);
-	};
+		res.set = function (field, value) {
+			test.equal(field, 'Content-Type');
+			test.equal(value, 'text/plain');
+		};
 
-	dominion.middleware(req, res, next);
+		var next = function () {
+			test.ok(true);
+		};
 
-	dominion.once('domainError', function (reqObj, resObj, err) {
-		test.equal(reqObj, req);
-		test.equal(resObj, res);
-		test.equal(err, 'test error');
-	});
+		dominion.middleware(req, res, next);
 
-	dominion.once('shutdown', function () {
-		test.ok(true);
-	});
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			test.equal(reqObj, req);
+			test.equal(resObj, res);
+			test.equal(err, 'test error');
+			test.strictEqual(sendError, undefined);
+		});
 
-	testEmitter.once('disconnect', function () {
-		test.ok(true);
-	});
+		testEmitter.once('disconnect', function () {
+			test.ok(true);
+		});
 
-	testEmitter.once('resCode', function (code) {
-		test.strictEqual(code, 500);
-	});
+		testEmitter.once('resCode', function (code) {
+			test.strictEqual(code, 500);
+		});
 
-	fakeServer.once('close', function () {
-		test.ok(true);
-	});
+		fakeServer.once('close', function () {
+			test.ok(true);
+		});
 
-	req.emit('error', 'test error');
+		res.emit('error', 'test error');
 
-	process.nextTick(function () {
-		test.done();
-	});
+		process.nextTick(function () {
+			test.done();
+		});
+	},
+
+	'A throw when trying to close should be caught.': function (test) {
+		'use strict';
+
+		test.expect(5);
+
+		var req = new EventEmitter();
+
+		// res is missing methods, so an uncaught exception will be thrown.
+		var res = {};
+
+		var next = function () {
+			test.ok(true);
+		};
+
+		dominion.middleware(req, res, next);
+
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			test.equal(reqObj, req, 1);
+			test.equal(resObj, res, 2);
+			test.equal(err, 'Error message.', 3);
+			test.ok(sendError instanceof Error, 4);
+		});
+
+		process.nextTick(function () {
+			test.done();
+		});
+
+		req.emit('error', 'Error message.');
+	}
 };
 
-exports['The middleware should catch response errors and disconnect.'] = function (test) {
-	'use strict';
+exports.vanilla = {
+	'The vanilla handler should catch request errors and disconnect.': function (test) {
+		'use strict';
 
-	test.expect(8);
+		test.expect(10);
 
-	var fakeServer = new FakeServer();
+		var fakeServer = new FakeServer();
 
-	dominion.addServer(fakeServer);
+		dominion.addServer(fakeServer);
 
-	var req = {};
+		var req = new EventEmitter();
 
-	var res = new EventEmitter();
+		var res = {
+			setHeader: function (field, value) {
+				test.equal(field, 'Content-Type');
+				test.equal(value, 'text/plain');
+			},
+			set statusCode (code) {
+				test.strictEqual(code, 500);
+			},
+			get statusCode () {},
+			end: function (code) {
+				test.strictEqual(code, 'Internal Server Error');
+			}
+		};
 
-	res.send = function (code) {
-		testEmitter.emit('resCode', code);
-	};
+		dominion.vanilla(req, res);
 
-	var next = function () {
-		test.ok(true);
-	};
+		dominion.once('domainError', function (reqObj, resObj, err) {
+			test.equal(reqObj, req);
+			test.equal(resObj, res);
+			test.equal(err, 'test error');
+		});
 
-	dominion.middleware(req, res, next);
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			//test.equal(res.statusCode, 500);
+			test.equal(reqObj, req);
+			test.equal(resObj, res);
+			test.equal(err, 'test error');
+			test.strictEqual(sendError, undefined);
+		});
 
-	dominion.once('domainError', function (reqObj, resObj, err) {
-		test.equal(reqObj, req);
-		test.equal(resObj, res);
-		test.equal(err, 'test error');
-	});
+		testEmitter.once('disconnect', function () {
+			test.ok(true);
+		});
 
-	dominion.once('shutdown', function () {
-		test.ok(true);
-	});
+		fakeServer.once('close', function () {
+			test.ok(true);
+		});
 
-	testEmitter.once('disconnect', function () {
-		test.ok(true);
-	});
+		req.emit('error', 'test error');
 
-	testEmitter.once('resCode', function (code) {
-		test.strictEqual(code, 500);
-	});
+		process.nextTick(function () {
+			test.done();
+		});
+	},
 
-	fakeServer.once('close', function () {
-		test.ok(true);
-	});
+	'The vanilla handler should catch response errors and disconnect.': function (test) {
+		'use strict';
 
-	res.emit('error', 'test error');
+		test.expect(9);
 
-	process.nextTick(function () {
-		test.done();
-	});
+		var fakeServer = new FakeServer();
+
+		dominion.addServer(fakeServer);
+
+		var req = {};
+
+		var res = new EventEmitter();
+
+		res.end = function (code) {
+			test.strictEqual(code, 'Internal Server Error');
+		};
+
+		res.setHeader = function (field, value) {
+			test.equal(field, 'Content-Type');
+			test.equal(value, 'text/plain');
+		};
+
+		dominion.vanilla(req, res);
+
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			test.equal(reqObj, req);
+			test.equal(resObj, res);
+			test.equal(err, 'test error');
+			test.strictEqual(sendError, undefined);
+		});
+
+		testEmitter.once('disconnect', function () {
+			test.ok(true);
+		});
+
+		fakeServer.once('close', function () {
+			test.ok(true);
+		});
+
+		res.emit('error', 'test error');
+
+		process.nextTick(function () {
+			test.done();
+		});
+	},
+
+	'A throw when trying to close should be caught.': function (test) {
+		'use strict';
+
+		test.expect(4);
+
+		var req = new EventEmitter();
+
+		// res is missing methods, so an uncaught exception will be thrown.
+		var res = {};
+
+		dominion.vanilla(req, res);
+
+		dominion.once('shutdown', function (reqObj, resObj, err, sendError) {
+			test.equal(reqObj, req, 1);
+			test.equal(resObj, res, 2);
+			test.equal(err, 'Error message.', 3);
+			test.ok(sendError instanceof Error, 4);
+		});
+
+		process.nextTick(function () {
+			test.done();
+		});
+
+		req.emit('error', 'Error message.');
+	}
 };
 
-exports['A throw when trying to close should be caught.'] = function (test) {
-	'use strict';
-
-	test.expect(5);
-
-	// When the middleware tries to call cluster.worker.disconnect, it will throw a type error.
-	cluster.worker = null;
-
-	var req = new EventEmitter();
-	var res = {};
-	var next = function () {
-		test.ok(true);
-	};
-
-	dominion.middleware(req, res, next);
-
-	dominion.once('sendError', function (reqObj, resObj, err) {
-		test.equal(reqObj, req);
-		test.equal(resObj, res);
-		test.ok(err instanceof TypeError);
-	});
-
-	dominion.once('shutdown', function () {
-		test.ok(true);
-	});
-
-	process.nextTick(function () {
-		test.done();
-	});
-
-	req.emit('error', 'Error message');
-};

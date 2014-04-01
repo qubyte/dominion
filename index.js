@@ -8,9 +8,8 @@ var servers = [];
 
 
 /**
- * Middleware for use with express or general HTTP server request events. Use at the beginning of
- * the middleware stack for the best coverage with Express. or at the top of your request event
- * handler for vanilla Node HTTP servers.
+ * Middleware for use with express. Use at the beginning of the middleware stack for the best
+ * coverage.
  *
  * @param {Object}   req  Request object.
  * @param {Object}   res  Response object.
@@ -23,20 +22,21 @@ exports.middleware = function (req, res, next) {
 	var d = domain.create();
 
 	d.on('error', function (err) {
-		exports.emit('shutdown');
+		var sendError;
 
 		try {
-			exports.emit('domainError', req, res, err);
-
 			servers.slice().forEach(function (server) {
 				server.close();
 			});
 
 			cluster.worker.disconnect();
 
-			res.send(500);
-		} catch (err) {
-			exports.emit('sendError', req, res, err);
+			res.set('Content-Type', 'text/plain');
+			res.send(500, 'Internal Server Error');
+		} catch (error) {
+			sendError = error;
+		} finally {
+			exports.emit('shutdown', req, res, err, sendError);
 		}
 	});
 
@@ -44,6 +44,46 @@ exports.middleware = function (req, res, next) {
 	d.add(res);
 
 	next();
+};
+
+
+/**
+ * A function for use with general HTTP server request events. Use at the beginning of the request
+ * handler for the best coverage with.
+ *
+ * @param {Object} req  Request object.
+ * @param {Object} res  Response object.
+ */
+
+exports.vanilla = function (req, res) {
+	/* jshint camelcase: false */
+
+	'use strict';
+
+	var d = domain.create();
+
+	d.on('error', function (err) {
+		var sendError;
+
+		try {
+			servers.slice().forEach(function (server) {
+				server.close();
+			});
+
+			cluster.worker.disconnect();
+
+			res.setHeader('Content-Type', 'text/plain');
+			res.statusCode = 500;
+			res.end('Internal Server Error');
+		} catch (error) {
+			sendError = error;
+		} finally {
+			exports.emit('shutdown', req, res, err, sendError);
+		}
+	});
+
+	d.add(req);
+	d.add(res);
 };
 
 

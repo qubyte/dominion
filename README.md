@@ -47,8 +47,7 @@ dominion.once('shutdown', function () {
 });
 ```
 
-To use with vanilla Node HTTP servers, you can spoof the `next` function with a function of your
-own:
+To use with vanilla Node HTTP servers, you can spoof the `vanilla` method:
 
 ```javascript
 var http = require('http');
@@ -68,9 +67,9 @@ dominion.once('shutdown', function () {
 var server = http.createServer(function (req, res) {
     'use strict';
 
-    dominion.middleware(req, res, function (err) {
-        // Handle errors and the rest of your handler logic.
-    });
+    dominion.vanilla(req, res);
+
+    // Other handler logic...
 });
 
 // Register the server with dominion.
@@ -84,22 +83,36 @@ response, then all registered servers are closed to stop new incoming connection
 register a listener on the `'shutdown'` event to for the server to close after some time, in case
 the server hangs.
 
+## Methods
+
+### `dominion.middleware(req, res, next)`
+
+This is a traditional express middleware. If an error is caught by the domain, then it attempts to
+send a 500 response and close all registered servers.
+
+### `dominion.vanilla(req, res)`
+
+This behaves much like the middleware, but is intended for use with vanilla Node HTTP servers.
+Place at the top of your response handler.
+
+### `dominion.addServer(server)`
+
+Add the HTTP server object to the dominion module. All registered servers will be closed if dominion
+intercepts an error. Since dominion will shut down all servers before quitting the worker process,
+all should be registered.
+
 ## Events
 
 Events for logging and shutdown are emitted by dominion. It is assumed that you'll have your own
 logging solution.
 
-### `shutdown`
+### `shutdown`: `(request, response, error, sendError)`
 
 Emitted when the domain inside the middleware catches an error. You should register a listener on
 this event to set a timeout to force the process to close if it is hung for whatever reason.
+Listeners will receive the arguments:
 
-### `domainError`
-
-Emitted when the domain is handling the error. It passes the request, response and error objects
-respectively to the event listener for logging.
-
-### `sendError`
-
-If there was an error in the shutdown process in the domain middleware, then this event is emitted,
-and passes the request, response and error objects respectively to the listener.
+ - `request` - The request object.
+ - `response` - The response object.
+ - `error` - The error caught by the domain middleware.
+ - `sendError` - This will be defined only if an error occurs when trying to send a response.
