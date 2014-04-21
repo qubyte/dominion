@@ -1,15 +1,17 @@
 # dominion
 
-[![Coverage Status](http://img.shields.io/coveralls/qubyte/dominion.svg)](https://coveralls.io/r/qubyte/dominion?branch=master)
-[![Build Status](http://img.shields.io/travis/qubyte/dominion/master.svg)](https://travis-ci.org/qubyte/dominion)
+[![Coverage Status](https://img.shields.io/coveralls/qubyte/dominion.svg?style=flat)](https://coveralls.io/r/qubyte/dominion?branch=master)
+[![Build Status](https://img.shields.io/travis/qubyte/dominion/master.svg?style=flat)](https://travis-ci.org/qubyte/dominion)
 
-[![npm](http://img.shields.io/npm/v/dominion.svg)](https://npmjs.org/dominion)
-[![npm](http://img.shields.io/github/release/qubyte/dominion.svg)](https://github.com/qubyte/dominion/releases)
+[![npm](https://img.shields.io/npm/v/dominion.svg?style=flat)](https://npmjs.org/dominion)
+[![npm](https://img.shields.io/github/release/qubyte/dominion.svg?style=flat)](https://github.com/qubyte/dominion/releases)
 
 Domain middleware for Express and vanilla Node.js. Dominion has no production dependencies.
 
 Dominion will attempt to gracefully close all servers registered with it when any requests using
-the domain middleware throw an otherwise uncaught exception.
+the domain middleware throw an otherwise uncaught exception. Dominion is intended to be used with
+on cluster workers, but will also work on master instances to make testing a little easier for its
+dependents.
 
 ## Usage
 
@@ -99,7 +101,8 @@ Place at the top of your response handler.
 
 Add the HTTP server object to the dominion module. All registered servers will be closed if dominion
 intercepts an error. Since dominion will shut down all servers before quitting the worker process,
-all should be registered.
+all should be registered. On a cluster worker, all servers will be closed whether of not they have
+been registered.
 
 ## Events
 

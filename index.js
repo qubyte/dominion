@@ -25,18 +25,19 @@ exports.middleware = function (req, res, next) {
 		var sendError;
 
 		try {
-			servers.slice().forEach(function (server) {
-				server.close();
-			});
-
-			cluster.worker.disconnect();
+			if (cluster.isMaster) {
+				servers.slice().forEach(function (server) {
+					server.close();
+				});
+			} else {
+				cluster.worker.disconnect();
+			}
 
 			res.set('Content-Type', 'text/plain');
 			res.send(500, 'Internal Server Error');
 		} catch (error) {
 			sendError = error;
 		} finally {
-			/* jscs ignore next */
 			exports.emit('shutdown', req, res, err, sendError);
 		}
 	});
@@ -67,11 +68,13 @@ exports.vanilla = function (req, res) {
 		var sendError;
 
 		try {
-			servers.slice().forEach(function (server) {
-				server.close();
-			});
-
-			cluster.worker.disconnect();
+			if (cluster.isMaster) {
+				servers.slice().forEach(function (server) {
+					server.close();
+				});
+			} else {
+				cluster.worker.disconnect();
+			}
 
 			res.setHeader('Content-Type', 'text/plain');
 			res.statusCode = 500;
@@ -79,7 +82,6 @@ exports.vanilla = function (req, res) {
 		} catch (error) {
 			sendError = error;
 		} finally {
-			/* jscs ignore next */
 			exports.emit('shutdown', req, res, err, sendError);
 		}
 	});

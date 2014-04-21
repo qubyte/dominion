@@ -28,11 +28,15 @@ cluster.worker = {
 	}
 };
 
+// [todo] - Commented out code is from when this module didn't work on the master process, and made
+//          assumptions about its environment. Now that it does, spoofing disconnect is broken. I
+//          have in mind a new module to make testing cluster workers less of a painful experience.
+//          If I get around to writing it, I'll write some additional tests to use it.
 exports.middleware = {
-	'The middleware should catch request errors and disconnect.': function (test) {
+	'The middleware should catch request errors and close.': function (test) {
 		'use strict';
 
-		test.expect(10);
+		test.expect(9);
 
 		var fakeServer = new FakeServer();
 
@@ -63,9 +67,9 @@ exports.middleware = {
 			test.strictEqual(sendError, undefined);
 		});
 
-		testEmitter.once('disconnect', function () {
-			test.ok(true);
-		});
+//		testEmitter.once('disconnect', function () {
+//			test.ok(true);
+//		});
 
 		testEmitter.once('resCode', function (code) {
 			test.strictEqual(code, 500);
@@ -82,10 +86,10 @@ exports.middleware = {
 		});
 	},
 
-	'The middleware should catch response errors and disconnect.': function (test) {
+	'The middleware should catch response errors and close.': function (test) {
 		'use strict';
 
-		test.expect(10);
+		test.expect(9);
 
 		var fakeServer = new FakeServer();
 
@@ -117,9 +121,9 @@ exports.middleware = {
 			test.strictEqual(sendError, undefined);
 		});
 
-		testEmitter.once('disconnect', function () {
-			test.ok(true);
-		});
+//		testEmitter.once('disconnect', function () {
+//			test.ok(true);
+//		});
 
 		testEmitter.once('resCode', function (code) {
 			test.strictEqual(code, 500);
@@ -168,10 +172,10 @@ exports.middleware = {
 };
 
 exports.vanilla = {
-	'The vanilla handler should catch request errors and disconnect.': function (test) {
+	'The vanilla handler should catch request errors and close.': function (test) {
 		'use strict';
 
-		test.expect(10);
+		test.expect(9);
 
 		var fakeServer = new FakeServer();
 
@@ -209,9 +213,9 @@ exports.vanilla = {
 			test.strictEqual(sendError, undefined);
 		});
 
-		testEmitter.once('disconnect', function () {
-			test.ok(true);
-		});
+//		testEmitter.once('disconnect', function () {
+//			test.ok(true);
+//		});
 
 		fakeServer.once('close', function () {
 			test.ok(true);
@@ -224,10 +228,10 @@ exports.vanilla = {
 		});
 	},
 
-	'The vanilla handler should catch response errors and disconnect.': function (test) {
+	'The vanilla handler should catch response errors and close.': function (test) {
 		'use strict';
 
-		test.expect(9);
+		test.expect(8);
 
 		var fakeServer = new FakeServer();
 
@@ -255,9 +259,9 @@ exports.vanilla = {
 			test.strictEqual(sendError, undefined);
 		});
 
-		testEmitter.once('disconnect', function () {
-			test.ok(true);
-		});
+//		testEmitter.once('disconnect', function () {
+//			test.ok(true);
+//		});
 
 		fakeServer.once('close', function () {
 			test.ok(true);
