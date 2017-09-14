@@ -1,5 +1,7 @@
 # dominion
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/qubyte/dominion.svg)](https://greenkeeper.io/)
+
 [![Coverage Status](https://img.shields.io/coveralls/qubyte/dominion.svg?style=flat)](https://coveralls.io/r/qubyte/dominion?branch=master)
 [![Build Status](https://img.shields.io/travis/qubyte/dominion/master.svg?style=flat)](https://travis-ci.org/qubyte/dominion)
 
